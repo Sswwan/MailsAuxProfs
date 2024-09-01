@@ -3,56 +3,68 @@ import os
 
 
 pathFolderPdf = "temp/generation"
-pathFolderEleves = "temp/needs"
+pathFolderBases = "temp/needs"
 pathFolderClasses = "temp/classes"
 listeNomsEleves = []
-liste_fichiers = []
-eleves = {}
+listeFichiers = []
+dictEleveClasse = {}
 
 #------------------------------------------------------------------
+def creerBaseRenommage():
+    # Récupère la liste des noms d'élèves nécéssaires pour le renommage des fichiers
+
+    with open(pathFolderBases + "/" + "listeNoms.csv", "r") as fichier:
+        listeNomsEleves = fichier.readlines()
+
+    for i in range(len(listeNomsEleves)):
+        listeNomsEleves[i] = listeNomsEleves[i].replace("\n", "")
+
+
 def creerBaseEleve():
+    #A partir d'un fichier csv on créer un dictionnaire avec pour entrée le nom de l'élève et en sortie sa classe
 
     i = 0
+    with open(pathFolderBases + "/" + "baseEleves.csv", "r") as f:
 
-    with open(pathFolderEleves + "/" + "baseEleves.csv", "r") as f:
         for l in f:
+
             if i >= 1:
+
                 x = l.replace("\n", "").split(";")
-                eleves[x[0]] = x
+                dictEleveClasse[x[0]] = x
             i += 1
+
 
 def renameFiles():
-    if len(liste_fichiers) == len(listeNomsEleves):
+
+    if len(listeFichiers) == len(listeNomsEleves):
+
         i = 0
-        for f in liste_fichiers:
+        for f in listeFichiers:
+
             os.rename(pathFolderPdf + "/" + f, pathFolderPdf + "/" + listeNomsEleves[i] + ".pdf")
             i += 1
+
     else:
+
         print("Problème de taille de listes")
 
+
 def sortFiles():
-    for e in liste_fichiers:
-        classe = eleves[e.replace(".pdf", "")]
+
+    for e in listeFichiers:
+
+        classe = dictEleveClasse[e.replace(".pdf", "")]
         os.rename(pathFolderPdf + "/" + e, pathFolderClasses + "/" + classe[1] + "/" + e)
 
 #------------------------------------------------------------------
 
+
 creerBaseEleve()
-
-liste_fichiers = os.listdir(pathFolderPdf)
-
-# Récupère la liste des noms d'élèves pour la génération de fichiers
-with open(pathFolderEleves + "/" + "listeNoms.csv", "r") as fichier:
-    listeNomsEleves = fichier.readlines()
-
-
-for i in range(len(listeNomsEleves)):
-    listeNomsEleves[i] = listeNomsEleves[i].replace("\n", "")
-
+listeFichiers = os.listdir(pathFolderPdf)
+creerBaseRenommage()
 renameFiles()
-
-liste_fichiers = os.listdir(pathFolderPdf)
-
+listeFichiers = os.listdir(pathFolderPdf)
 sortFiles()
 
 
