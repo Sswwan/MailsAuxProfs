@@ -1,30 +1,24 @@
 # coding: utf-8
 import os
 
-
-pathFolderPdf = "temp/generation"
-pathFolderBases = "temp/needs"
-pathFolderClasses = "temp/classes"
-listeNomsEleves = []
-listeFichiers = []
-dictEleveClasse = {}
-
 #------------------------------------------------------------------
-def creerBaseRenommage():
-    # Récupère la liste des noms d'élèves nécéssaires pour le renommage des fichiers
+def getListeNomsEleves():
+    # Récupère la liste des noms d'élèves pour la génération de fichiers
 
-    with open(pathFolderBases + "/" + "listeNoms.csv", "r") as fichier:
-        listeNomsEleves = fichier.readlines()
+    liste = []
+    with open(getPathFiles("base") + "/" + "listeNoms.csv", "r") as fichier:
+        liste = fichier.readlines()
 
-    for i in range(len(listeNomsEleves)):
-        listeNomsEleves[i] = listeNomsEleves[i].replace("\n", "")
+    for i in range(len(liste)):
+        liste[i] = liste[i].replace("\n", "")
+    return liste
 
 
-def creerBaseEleve():
+def getDictClasse():
     #A partir d'un fichier csv on créer un dictionnaire avec pour entrée le nom de l'élève et en sortie sa classe
-
+    dictEleveClasse = {}
     i = 0
-    with open(pathFolderBases + "/" + "baseEleves.csv", "r") as f:
+    with open(getPathFiles("base") + "/" + "baseEleves.csv", "r") as f:
 
         for l in f:
 
@@ -33,16 +27,19 @@ def creerBaseEleve():
                 x = l.replace("\n", "").split(";")
                 dictEleveClasse[x[0]] = x
             i += 1
+    return dictEleveClasse
 
 
 def renameFiles():
 
+    listeFichiers = getListeFichiers("scan")
+    listeNomsEleves = getListeNomsEleves()
     if len(listeFichiers) == len(listeNomsEleves):
 
         i = 0
         for f in listeFichiers:
 
-            os.rename(pathFolderPdf + "/" + f, pathFolderPdf + "/" + listeNomsEleves[i] + ".pdf")
+            os.rename(getPathFiles("scan") + "/" + f, getPathFiles("renamed") + "/" + listeNomsEleves[i] + ".pdf")
             i += 1
 
     else:
@@ -52,19 +49,37 @@ def renameFiles():
 
 def sortFiles():
 
-    for e in listeFichiers:
+    dictClasse = getDictClasse()
 
-        classe = dictEleveClasse[e.replace(".pdf", "")]
-        os.rename(pathFolderPdf + "/" + e, pathFolderClasses + "/" + classe[1] + "/" + e)
+    for e in getListeFichiers("renamed"):
+
+        classe = dictClasse[e.replace(".pdf", "")]
+        os.rename(getPathFiles("renamed") + "/" + e, getPathFiles("classe") + "/" + classe[1] + "/" + e)
+
+
+def getPathFiles(typeOfFile):
+    string = "str"
+
+    if type(typeOfFile) == type(string):
+        match typeOfFile:
+            case "scan":
+                string = "temp/generation"
+            case "base":
+                string = "temp/needs"
+            case "classe":
+                string = "temp/classes"
+            case "renamed":
+                string = "temp/renamed"
+    return string
+
+
+def getListeFichiers(where):
+    return os.listdir(getPathFiles(where))
+
 
 #------------------------------------------------------------------
 
-
-creerBaseEleve()
-listeFichiers = os.listdir(pathFolderPdf)
-creerBaseRenommage()
 renameFiles()
-listeFichiers = os.listdir(pathFolderPdf)
 sortFiles()
 
 
