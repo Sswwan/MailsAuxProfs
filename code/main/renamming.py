@@ -2,13 +2,12 @@
 import os
 
 #------------------------------------------------------------------
-def getListeNomsEleves():
+def get_liste_noms_eleves():
     """
     Récupère la liste des noms d'élèves pour la génération de fichiers et la retourne
     """
 
-    liste = []
-    with open(getPathFiles("base") + "/" + "listeNoms.csv", "r") as fichier:
+    with open(get_path_files("base") + "/" + "listeNoms.csv", "r") as fichier:
         liste = fichier.readlines()
 
     for i in range(len(liste)):
@@ -16,40 +15,40 @@ def getListeNomsEleves():
     return liste
 
 
-def getDictClasse():
+def get_dict_classe():
     """
     A partir d'un fichier csv on créer un dictionnaire avec pour
     entrée le nom de l'élève et en sortie sa classe puis le retourner
     """
-    dictEleveClasse = {}
+    dict_eleve_classe = {}
     i = 0
-    with open(getPathFiles("base") + "/" + "baseEleves.csv", "r") as f:
+    with open(get_path_files("base") + "/" + "baseEleves.csv", "r") as f:
 
         for l in f:
 
             if i >= 1:
 
                 x = l.replace("\n", "").split(";")
-                dictEleveClasse[x[0]] = x
+                dict_eleve_classe[x[0]] = x
             i += 1
-    return dictEleveClasse
+    return dict_eleve_classe
 
 
-def renameFiles():
+def rename_files():
     """
     On récupère les fichiers du dossiers scan pour les
     renommer en fonction de la liste de noms fournit
     et on les déplace dans le fichier renamed
     """
 
-    listeFichiers = getListeFichiers("scan")
-    listeNomsEleves = getListeNomsEleves()
-    if len(listeFichiers) == len(listeNomsEleves):
+    liste_fichiers = get_liste_fichiers("scan")
+    liste_noms_eleves = get_liste_noms_eleves()
+    if len(liste_fichiers) == len(liste_noms_eleves):
 
         i = 0
-        for f in listeFichiers:
+        for f in liste_fichiers:
 
-            os.rename(getPathFiles("scan") + "/" + f, getPathFiles("renamed") + "/" + listeNomsEleves[i] + ".pdf")
+            os.rename(get_path_files("scan") + "/" + f, get_path_files("renamed") + "/" + liste_noms_eleves[i] + ".pdf")
             i += 1
 
     else:
@@ -57,28 +56,28 @@ def renameFiles():
         print("Problème de taille de listes")
 
 
-def sortFiles():
+def sort_files():
     """
     On déplace les fichiers du dossier renamed vers les bons dossiers de classes
     après avoir passer le nom du fichier dans un dictionnaire comportant
     tout les éleves et leur classe
     """
-    dictClasse = getDictClasse()
+    dict_classe = get_dict_classe()
 
-    for e in getListeFichiers("renamed"):
+    for e in get_liste_fichiers("renamed"):
 
-        classe = dictClasse[e.replace(".pdf", "")]
-        os.rename(getPathFiles("renamed") + "/" + e, getPathFiles("classe") + "/" + classe[1] + "/" + e)
+        classe = dict_classe[e.replace(".pdf", "")]
+        os.rename(get_path_files("renamed") + "/" + e, get_path_files("classe") + "/" + classe[1] + "/" + e)
 
 
-def getPathFiles(typeOfFile):
+def get_path_files(type_of_file):
     """
     On retourne la position du dossier donné en entrée
     """
     string = "str"
 
-    if type(typeOfFile) == type(string):
-        match typeOfFile:
+    if type(type_of_file) == type(string):
+        match type_of_file:
             case "scan":
                 string = "temp/generation"
             case "base":
@@ -90,15 +89,15 @@ def getPathFiles(typeOfFile):
     return string
 
 
-def getListeFichiers(where):
+def get_liste_fichiers(where):
     """
     On récupère la liste de fichiers dans le dossier spécifié
     """
-    return os.listdir(getPathFiles(where))
+    return os.listdir(get_path_files(where))
 
 
 #------------------------------------------------------------------
 
 
-renameFiles()
-sortFiles()
+rename_files()
+sort_files()
