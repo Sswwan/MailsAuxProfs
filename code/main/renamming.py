@@ -6,6 +6,7 @@ import customtkinter
 from customtkinter import CTkLabel, CTkButton, CTkEntry
 
 
+
 #------------------------------------------------------------------
 def execute():
     app = App()
@@ -286,14 +287,58 @@ class CreateFolders(NewWindow):
             liste[i] = liste[i].replace("\n", "")
 
         return liste
-    def create_folders(self, liste_noms):
-        for e in liste_noms:
-            os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e)
+
+    def get_nb_colonnes(self):
+        with open(self.frame_create_folders.get_path_base() + "/" + "listeNoms.csv", "r") as fichier:
+            liste = fichier.readlines()
+
+        return liste[0].count(";") + 1
+
+    def get_ordre(self):
+        liste = self.frame_create_folders.get_ordre().get().split(";")
+        return liste
+
+    def get_colonne_values(self, dominante, soumise):
+
+        dict = {}
+        with open(self.frame_create_folders.get_path_base() + "/" + "listeNoms.csv", "r") as fichier:
+            i = 0
+            for l in fichier:
+                x = l.replace("\n", "").split(";")
+                key = x[dominante]
+                if key in dict:
+                    dict[key] += (x[soumise] + ";")
+                else:
+                    dict[key] = x[soumise] + ";"
+                i += 1
+        return dict
+
+
+    def create_folders(self, liste_noms, parameter):
+        if parameter == 1:
+            for e in liste_noms:
+                os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e)
+        else:
+            for e in list(liste_noms):
+                os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e)
+                for name in liste_noms[e].split(";"):
+                    if name != "":
+                        os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e + "/" + name)
+
+
 
 
     # Fonctions ...
     def run(self):
-        self.create_folders(self.get_liste_noms_fichiers())
+        if self.get_nb_colonnes() <= 1:
+            self.create_folders(self.get_liste_noms_fichiers(), 1)
+        else:
+            ordre = self.get_ordre()
+            i = 1
+            for e in ordre:
+                if i != len(ordre):
+                    self.create_folders(self.get_colonne_values(int(e) - 1, int(ordre[i]) - 1),2)
+            i += 1
         self.quit()
 
     def quit(self):
@@ -305,6 +350,7 @@ class CreateFolders(NewWindow):
             super().__init__(parent)
 
             text_button = "Parcourir ..."
+            self.ordre = StringVar()
             self.path_directory = "None"
             self.path_base  = "None"
 
@@ -320,11 +366,18 @@ class CreateFolders(NewWindow):
             self.label_base.grid(row=1, column=0, padx=5, pady=5)
             self.button_base.grid(row=1, column=1, padx=5, pady=5)
 
+            self.label_repertory = CTkLabel(self, text="Ordre des colonnes (max 2) séparé par des ; (exemple : 1;2) :")
+            self.button_repertory = CTkEntry(self, textvariable = self.ordre, width=150, height=3)
+            self.label_repertory.grid(row=2, column = 0, padx=5, pady=5)
+            self.button_repertory.grid(row=2, column = 1, padx=5, pady=5)
+
         # Getters
         def get_path_directory(self):
             return self.path_directory
         def get_path_base(self):
             return self.path_base
+        def get_ordre(self):
+            return self.ordre
 
         # Fonctions diverses
         def find_directory(self, type_of_file):
