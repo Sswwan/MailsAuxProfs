@@ -1,4 +1,5 @@
 # coding: utf-8
+import copy
 import os
 import tkinter.filedialog
 from tkinter import *
@@ -107,7 +108,7 @@ class RenamingFiles(NewWindow):
         Récupère la liste des noms d'élèves pour la génération de fichiers et la retourne
         """
 
-        with open(self.get_path_files("base") + "/" + "listeNoms.csv", "r") as fichier:
+        with open(self.get_path_files("liste"), "r") as fichier:
             liste = fichier.readlines()
 
         for i in range(len(liste)):
@@ -120,7 +121,7 @@ class RenamingFiles(NewWindow):
         entrée le nom de l'élève et en sortie sa classe puis le retourner
         """
         dict_eleve_classe = {}
-        with open(self.get_path_files("base") + "/" + "baseEleves.csv", "r") as f:
+        with open(self.get_path_files("base"), "r") as f:
 
             for l in f:
 
@@ -134,14 +135,16 @@ class RenamingFiles(NewWindow):
         et on les déplace dans le fichier renamed
         """
 
-        liste_fichiers = self.get_liste_fichiers("scan", )
+        liste_fichiers = self.get_liste_fichiers("scan")
         liste_noms_eleves = self.get_liste_noms_eleves()
+        print(len(liste_fichiers))
+        print(len(liste_noms_eleves))
         if len(liste_fichiers) == len(liste_noms_eleves):
 
             i = 0
             for f in liste_fichiers:
 
-                os.rename(self.get_path_files("scan") + "/" + f, self.get_path_files("renamed") + "/" + liste_noms_eleves[i] + ".JPG")
+                os.rename(self.get_path_files("scan") + "/" + f, self.get_path_files("renamed") + "/" + liste_noms_eleves[i] + self.get_extension())
                 i += 1
 
         else:
@@ -171,11 +174,15 @@ class RenamingFiles(NewWindow):
                     string = self.files_frame.get_path_scan()
                 case "base":
                     string = self.files_frame.get_path_base()
+                case "liste":
+                    string = self.files_frame.get_path_liste()
                 case "classe":
                     string = self.files_frame.get_path_classes()
                 case "renamed":
                     string = self.files_frame.get_path_traitement()
         return string
+    def get_extension(self):
+        return self.files_frame.get_extension()
     def get_liste_fichiers(self, where):
         """
         On récupère la liste de fichiers dans le dossier spécifié
@@ -211,28 +218,34 @@ class RenamingFiles(NewWindow):
             self.path_scan = "None"
             self.path_base = "None"
             self.path_classes = "None"
-            self.path_traitement = "None"
+            self.path_traitement = "C:\\Users\\swans\\Desktop\\test\\Nouveau dossier (2)"
+            self.path_liste = "None"
 
             self.label_scan = CTkLabel(self, text="Chemin des fichiers a renommer :")
             self.button_scan = CTkButton(self, text=text, command=lambda: self.find_directory("scan"))
             self.label_scan.grid(row = 0, column = 0, padx = 5, pady = 5)
             self.button_scan.grid(row = 0, column = 1, padx = 5, pady = 5)
 
-            self.label_base = CTkLabel(self, text="Chemin des bases de données :")
-            self.button_base = CTkButton(self, text=text, command=lambda: self.find_directory("base"))
+            self.label_base = CTkLabel(self, text="Chemin de la bases de données :")
+            self.button_base = CTkButton(self, text=text, command=lambda: self.find_filename("base"))
             self.label_base.grid(row = 1, column = 0, padx = 5, pady = 5)
             self.button_base.grid(row = 1, column = 1, padx = 5, pady = 5)
 
+            self.label_base = CTkLabel(self, text="Chemin de la liste de rennomage :")
+            self.button_base = CTkButton(self, text=text, command=lambda: self.find_filename("liste"))
+            self.label_base.grid(row=2, column=0, padx=5, pady=5)
+            self.button_base.grid(row=2, column=1, padx=5, pady=5)
+
             self.label_classes = CTkLabel(self, text="Chemin du répertoire contenant les dossiers classes :")
             self.button_classes = CTkButton(self, text=text, command=lambda: self.find_directory("classe"))
-            self.label_classes.grid(row = 2, column = 0, padx = 5, pady = 5)
-            self.button_classes.grid(row = 2, column = 1, padx = 5, pady = 5)
+            self.label_classes.grid(row = 3, column = 0, padx = 5, pady = 5)
+            self.button_classes.grid(row = 3, column = 1, padx = 5, pady = 5)
 
 
             self.label_extension = CTkLabel(self, text="Préciser l'extension des fichiers (avec le point devant !) :")
             self.entry_extension = CTkEntry(self, textvariable=self.extension, width=100, height=3)
-            self.label_extension.grid(row = 3, column = 0, padx = 5, pady = 5)
-            self.entry_extension.grid(row = 3, column = 1, padx = 5, pady = 5)
+            self.label_extension.grid(row = 4, column = 0, padx = 5, pady = 5)
+            self.entry_extension.grid(row = 4, column = 1, padx = 5, pady = 5)
 
         # Getters
         def get_path_scan(self):
@@ -243,8 +256,10 @@ class RenamingFiles(NewWindow):
             return self.path_classes
         def get_path_traitement(self):
             return self.path_traitement
+        def get_path_liste(self):
+            return self.path_liste
         def get_extension(self):
-            return self.extension
+            return self.extension.get()
 
         # Fonctions diverses
         def find_directory(self, type_of_file):
@@ -256,12 +271,22 @@ class RenamingFiles(NewWindow):
             match type_of_file:
                 case "scan":
                     self.path_scan = directory
-                case "base":
-                    self.path_base = directory
                 case "classe":
                     self.path_classes = directory
                 case "renamed":
                     self.path_traitement = directory
+
+        def find_filename(self, type_of_file):
+            """
+            Cette fonction permet d'assigner un chemin de fichier a une variable
+            """
+            filename = tkinter.filedialog.askopenfilename(initialdir="/",title="Select File",filetypes=(("csv files","*.csv"),("all files","*.*")))
+
+            match type_of_file:
+                case "base":
+                    self.path_base = filename
+                case "liste":
+                    self.path_liste = filename
 
 class CreateFolders(NewWindow):
     """
@@ -279,73 +304,59 @@ class CreateFolders(NewWindow):
 
 
     # Fonctions diverses
-    def get_liste_noms_fichiers(self):
-        with open(self.frame_create_folders.get_path_base() + "/" + "listeNoms.csv", "r") as fichier:
-            liste = fichier.readlines()
-
-        for i in range(len(liste)):
-            liste[i] = liste[i].replace("\n", "")
-
-        return liste
-
-    def get_nb_colonnes(self):
-        with open(self.frame_create_folders.get_path_base() + "/" + "listeNoms.csv", "r") as fichier:
-            liste = fichier.readlines()
-
-        return liste[0].count(";") + 1
-
     def get_ordre(self):
+        """
+         Récupère le string donné par l'utilisateur et le transforme en liste
+         :return liste
+        """
         liste = self.frame_create_folders.get_ordre().get().split(";")
         return liste
+    def reorder(self):
+        """
+         On récupére toutes les infos du fichier csv et on remets les colonnes
+         dans l'ordre indiqué par l'utilisateur
 
-    def get_colonne_values(self, dominante, soumise):
-
-        dict = {}
-        with open(self.frame_create_folders.get_path_base() + "/" + "listeNoms.csv", "r") as fichier:
-            i = 0
+         :return list
+        """
+        ordre = self.get_ordre()
+        liste_arranged = []
+        with open(self.frame_create_folders.get_path_base(), "r") as fichier:
             for l in fichier:
-                x = l.replace("\n", "").split(";")
-                key = x[dominante]
-                if key in dict:
-                    dict[key] += (x[soumise] + ";")
-                else:
-                    dict[key] = x[soumise] + ";"
-                i += 1
-        return dict
-
-
-    def create_folders(self, liste_noms, parameter):
-        if parameter == 1:
-            for e in liste_noms:
-                os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e)
-        else:
-            for e in list(liste_noms):
-                os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e)
-                for name in liste_noms[e].split(";"):
-                    if name != "":
-                        os.mkdir(self.frame_create_folders.get_path_directory() + "/" + e + "/" + name)
-
-
-
+                name = ""
+                liste = []
+                x = l.split(";")
+                for e in ordre:
+                    liste.append(x[int(e) - 1])
+                for i in liste:
+                    name += i
+                    name += ";"
+                liste_arranged.append(name.replace("\n", ""))
+        return liste_arranged
+    def give_a_path(self,the_node, path):
+        """
+         Lance la passation d'un chemin
+        """
+        node = self.Node("")
+        the_node.add_node(path, node)
 
     # Fonctions ...
     def run(self):
-        if self.get_nb_colonnes() <= 1:
-            self.create_folders(self.get_liste_noms_fichiers(), 1)
-        else:
-            ordre = self.get_ordre()
-            i = 1
-            for e in ordre:
-                if i != len(ordre):
-                    self.create_folders(self.get_colonne_values(int(e) - 1, int(ordre[i]) - 1),2)
-            i += 1
-        self.quit()
+        path =self.frame_create_folders.get_path_directory()
+        node = self.Node("directories")
+        the_node = self.TheNode(path, node)
+        lines = self.reorder()
+        for l in lines:
+            self.give_a_path(the_node, l)
 
+        the_node.create_folder(path)
     def quit(self):
         super().destroy()
 
     # Classes nécéssaires
     class FrameCreateFolders(customtkinter.CTkFrame):
+        """
+            Frame où on stocke toutes les infos demandéees
+        """
         def __init__(self, parent):
             super().__init__(parent)
 
@@ -357,12 +368,12 @@ class CreateFolders(NewWindow):
             self.grid_columnconfigure((0, 1), weight= 1)
 
             self.label_repertory = CTkLabel(self, text="Chemin du répertoire où créer les nouveaux repértoires :")
-            self.button_repertory = CTkButton(self, text = text_button, command = lambda: self.find_directory("directory"))
+            self.button_repertory = CTkButton(self, text = text_button, command = self.find_directory)
             self.label_repertory.grid(row=0, column=0, padx=5, pady=5)
             self.button_repertory.grid(row=0, column=1, padx=5, pady=5)
 
             self.label_base = CTkLabel(self, text="Chemin de la base de données :")
-            self.button_base = CTkButton(self, text = text_button, command = lambda: self.find_directory("base"))
+            self.button_base = CTkButton(self, text = text_button, command = self.find_base)
             self.label_base.grid(row=1, column=0, padx=5, pady=5)
             self.button_base.grid(row=1, column=1, padx=5, pady=5)
 
@@ -380,17 +391,63 @@ class CreateFolders(NewWindow):
             return self.ordre
 
         # Fonctions diverses
-        def find_directory(self, type_of_file):
+        def find_directory(self):
             """
             Cette fonction permet d'assigner un chemin de fichier a une variable
             """
             directory = tkinter.filedialog.askdirectory(mustexist=True)
+            self.path_directory = directory
+        def find_base(self):
+            """
+            Cette fonction permet d'assigner un chemin de fichier a une variable
+            """
+            file_name = tkinter.filedialog.askopenfilename(initialdir="/", title="Select File",filetypes=(("csv files", ".csv"), ("all files","*.*")))
+            self.path_base = file_name
 
-            match type_of_file:
-                case "directory":
-                    self.path_directory = directory
-                case "base":
-                    self.path_base = directory
+    class TheNode:
+        def __init__(self, path, node):
+            self.node = node
+            self.name = "dossiers"
+            self.path = path
+            self.exist = False
+
+        def add_node(self, path, node):
+            self.node.add_node(path, node)
+        def create_folder(self, path):
+            self.node.create_folder(path)
+    class Node:
+        def __init__(self, name):
+            self.sub_nodes = []
+            self.name = name
+            self.exist = False
+
+        def add_node(self, path, node):
+            if path.count(";") > 1:
+                x = path.split(";", 1)
+                new_path = x[1]
+                exist = False
+
+                for n in self.sub_nodes:
+                    if x[0] == n.name:
+                        exist = True
+                        n.add_node(new_path, node)
+                        break
+                if not exist:
+                    clone_node = copy.deepcopy(node)
+                    clone_node.name = x[0]
+                    self.sub_nodes.append(clone_node)
+                    self.sub_nodes[-1].add_node(new_path, node)
+
+            else:
+                node.name = path.replace(";", "")
+                self.sub_nodes.append(copy.deepcopy(node))
+        def create_folder(self, path):
+            new_path = path + "/" + self.name
+            if not os.path.exists(new_path):
+                os.makedirs(new_path)
+            for node in self.sub_nodes:
+                node.create_folder(new_path)
+
 
 
 #------------------------------------------------------------------
